@@ -10,13 +10,13 @@
 
 Welcome to **LungScan AI**, a comprehensive, full-stack AI/ML healthcare application designed to detect multiple lung diseases from Chest X-ray images.
 
-This project was built as part of my **AI/ML Technical Training** to demonstrate end-to-end machine learning deployment—from deep learning model creation to building a responsive frontend and a robust backend. 
+This project was built as part of my **AI/ML Technical Training** to demonstrate end-to-end machine learning deployment—from deep learning model creation to building a responsive frontend and a robust backend API. 
 
 ---
 
 ## 🚀 Project Overview
 
-**LungScan AI** leverages a state-of-the-art Convolutional Neural Network (DenseNet121) to analyze chest X-rays and classify them into 5 distinct classes (Normal + 4 disease types). It incorporates **Grad-CAM (Gradient-weighted Class Activation Mapping)** to provide visual explanations of the model's predictions, highlighting the specific regions of the X-ray that influenced the AI's decision. 
+**LungScan AI** leverages a state-of-the-art Convolutional Neural Network to analyze chest X-rays and classify them into 5 distinct classes. It incorporates **Grad-CAM (Gradient-weighted Class Activation Mapping)** to provide visual explanations of the model's predictions, highlighting the specific regions of the X-ray that influenced the AI's decision. 
 
 The system features a multi-role architecture, separating patient and doctor dashboards with comprehensive analytics, secure authentication, and automated PDF report generation.
 
@@ -27,30 +27,51 @@ The system features a multi-role architecture, separating patient and doctor das
 
 ## ✨ Features
 
-- **Multi-Class Disease Detection:** Classifies Chest X-rays using a fine-tuned DenseNet121 model.
-- **Explainable AI (XAI):** Uses Grad-CAM to generate heatmaps, providing visual transparency for the AI's predictions.
-- **Role-Based Access Control:** Distinct user experiences for **Patients** (viewing their own scans/reports) and **Doctors** (managing multiple patients, analyzing visual analytics).
-- **Automated PDF Reports:** Generates downloadable, professional PDF reports combining the original X-ray, Grad-CAM heatmap, and prediction confidence scores.
-- **Visual Analytics:** Interactive dashboards displaying scan history, prediction confidence trends, and disease distributions.
-- **Secure Authentication & Database:** Powered by Supabase for secure user login and structured data storage.
+- **Multi-Class Disease Detection:** Classifies Chest X-rays into 5 distinct disease classes.
+- **Grad-CAM Explainable AI (XAI):** Generates heatmaps providing visual transparency for the AI's predictions.
+- **Single & Batch Scan Upload:** Flexible image upload capabilities for rapid or bulk screening.
+- **Side-by-Side Comparison:** Visually compare the original X-ray with the Grad-CAM heatmap.
+- **Top-3 Predictions:** Displays the top 3 probable classes along with their confidence scores.
+- **Low Confidence & Human Review Flags:** Automatically flags predictions with low confidence for human/doctor review.
+- **Patient Symptoms Input:** Contextualize AI predictions with patient-reported symptoms.
+- **Visual Analytics & Graphs Tab:** Interactive dashboards displaying scan history, confidence trends, and disease distributions.
+- **Automated PDF Reports:** Generate downloadable, professional PDF reports directly from the interface.
+- **Role-Based Dashboards:** Distinct user experiences for **Patients** (viewing their own scans/reports) and **Doctors** (managing multiple patients, analyzing visual analytics).
+- **Secure Authentication:** Powered by Supabase for secure user login, registration, and structured data storage.
+
+---
+
+## 🧠 Model Performance & Architecture
+
+- **Model Architecture:** `DenseNet121` (Transfer Learning)
+- **Input Size:** `299 × 299` pixels
+- **Classes (5):**
+  - Normal
+  - Bacterial Pneumonia
+  - Viral Pneumonia
+  - Corona Virus Disease
+  - Tuberculosis
+- **Performance:** Achieved high test accuracy during evaluation, demonstrating robust feature extraction capabilities on medical imaging datasets.
+- **Explainability:** Integrated **Grad-CAM** layer interpretation to visualize localized features driving the classification.
 
 ---
 
 ## 🛠️ Tech Stack
 
 ### Deep Learning & AI
-- **TensorFlow / Keras:** Model building, training, and Grad-CAM implementation.
-- **DenseNet121:** Base architecture for robust image feature extraction.
-- **NumPy & Pillow (PIL):** Image processing and array manipulation.
+- **TensorFlow / Keras:** Model building, fine-tuning, and Grad-CAM implementation.
+- **NumPy & Pillow (PIL):** Image processing and tensor manipulation.
 
 ### Backend
 - **FastAPI:** High-performance RESTful API for handling inference requests, file uploads, and data fetching.
-- **Uvicorn:** ASGI server.
-- **FPDF2:** Dynamic PDF report generation.
+- **Uvicorn:** ASGI web server.
+- **Pydantic:** Data validation and serialization.
 
 ### Frontend & Database
-- **React.js:** Dynamic, component-based user interface.
-- **Supabase:** PostgreSQL database, authentication, and user management.
+- **React.js (Vite):** Dynamic, component-based user interface.
+- **Tailwind CSS & GSAP/Framer Motion:** Styling and smooth micro-animations.
+- **jsPDF & html2canvas:** Client-side dynamic automated PDF report generation.
+- **Supabase:** PostgreSQL database, secure authentication, and user management.
 
 ---
 
@@ -74,17 +95,20 @@ Interactive charts displaying prediction confidence and historical trends for th
 A unified interface for healthcare professionals to monitor all patient scans and manage records.
 ![Doctor Dashboard](UI_and_Feautures_ScreenShot/Doctor_dashboard.png)
 
-### 5. Prediction Results & Scans
-Detailed breakdown of a scan, showing the prediction confidence and Grad-CAM heatmap.
+### 5. Prediction Results & Scans (Side-by-Side)
+Detailed breakdown of a scan, showing top predictions, confidence scores, and the side-by-side original vs Grad-CAM heatmap.
 ![Prediction Results](UI_and_Feautures_ScreenShot/Scans_from_doctor_dashboard.png)
 
 ### 6. Doctor Visual Analytics
 Aggregate analytics for doctors to understand disease distribution across all their patients.
 ![Doctor Analytics](UI_and_Feautures_ScreenShot/visual_analytics_from_doctor_dashboard.png)
 
-### 7. Automated PDF Report
-Sample of the generated PDF report containing the original scan, heatmap, and AI findings.
-![Sample PDF Report](UI_and_Feautures_ScreenShot/Sample_Reports/LungScan_Combined_Report.jpg)
+### 7. Automated PDF Reports
+The platform supports generating various styles of PDF reports.
+
+| Original X-Ray Report | Grad-CAM Report | Combined Report |
+| :---: | :---: | :---: |
+| ![XRay Only](UI_and_Feautures_ScreenShot/Sample_Reports/LungScan_XRay_Report.jpg) | ![GradCAM Only](UI_and_Feautures_ScreenShot/Sample_Reports/LungScan_GradCAM_Report.jpg) | ![Combined](UI_and_Feautures_ScreenShot/Sample_Reports/LungScan_Combined_Report.jpg) |
 
 ---
 
@@ -103,7 +127,13 @@ git clone https://github.com/balamuruganpg/LungScan-AI-Chest-Xray-Detection.git
 cd LungScan-AI-Chest-Xray-Detection
 ```
 
-### 2. Backend Setup (FastAPI)
+### 2. Environment Variables
+You will need to set up `.env` files for both the backend and frontend with your respective Supabase API URLs and anon keys.
+- **Frontend:** Create a `.env` in the `/frontend` directory.
+- **Backend:** Create a `.env` in the `/app` (or root) directory.
+> ⚠️ **IMPORTANT:** Never commit your `.env` files or secret keys to version control! The provided `.gitignore` already ensures these are excluded.
+
+### 3. Backend Setup (FastAPI)
 ```bash
 # Navigate to the project root
 # Create a virtual environment
@@ -119,7 +149,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> **Note:** Due to size limits, the trained `.keras` model weights are not included in this repository. Ensure you place your trained model inside the `Models/` directory before starting the backend.
+> **Note:** Due to size limits, the trained `.keras` model weights are not included in this repository. Ensure you place your trained DenseNet121 model inside the `Models/` directory before starting the backend.
 
 ```bash
 # Start the FastAPI server
@@ -127,7 +157,7 @@ cd app
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-### 3. Frontend Setup (React)
+### 4. Frontend Setup (React)
 Open a new terminal window.
 ```bash
 # Navigate to the frontend directory
@@ -139,9 +169,6 @@ npm install
 # Start the development server
 npm run dev
 ```
-
-### 4. Environment Variables
-You will need to set up `.env` files for both the backend and frontend with your respective Supabase API URLs and anon keys. (Refer to `.env.example` if available). **Never commit your secret keys!**
 
 ---
 
@@ -161,7 +188,7 @@ LungScan-AI-Chest-Xray-Detection/
 │   └── package.json
 │
 ├── UI_and_Feautures_ScreenShot/# Screenshots used in this README
-├── requirements.txt            # Python dependencies
+├── requirements.txt            # Python backend dependencies
 ├── .gitignore                  # Git ignore rules
 └── README.md                   # Project documentation
 ```
@@ -171,10 +198,10 @@ LungScan-AI-Chest-Xray-Detection/
 ## 🎓 Learning Outcomes
 
 Through building LungScan AI, I gained practical experience in:
-- Training and fine-tuning Deep Learning architectures (DenseNet121) for medical image analysis.
+- Training and fine-tuning Deep Learning architectures (**DenseNet121**) for medical image analysis.
 - Implementing **Explainable AI (XAI)** techniques like Grad-CAM to demystify neural network predictions.
 - Developing high-performance REST APIs with **FastAPI**.
-- Building responsive, multi-role user interfaces using **React**.
+- Building responsive, multi-role user interfaces using **React**, Vite, and Tailwind CSS.
 - Integrating robust authentication and relational database modeling using **Supabase (PostgreSQL)**.
 
 ## 🔮 Future Improvements
