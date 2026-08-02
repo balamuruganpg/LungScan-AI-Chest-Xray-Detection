@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="UI_and_Feautures_ScreenShot/lungscan_header_banner.jpg" alt="LungScan AI Header Banner" width="800" style="border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.3); margin-bottom: 20px;"/>
+  <img src="UI_and_Feautures_ScreenShot/lungscan_header_banner_v2.jpg" alt="LungScan AI Header Banner" width="100%" style="border-radius: 15px; box-shadow: 0px 4px 15px rgba(0,0,0,0.3); margin-bottom: 20px;"/>
   
   <h1>🫁 LungScan AI – Multi-Class Chest X-ray Disease Detection</h1>
   
