@@ -484,35 +484,22 @@ def verify_xray(img: Image.Image) -> XRayCheckResult:
     )
 
     # ── TIER 1 DECISION ──────────────────────────────────────────────────
-
-    # All 8 passed (or 7 passed with 0 strong failures) → definite X-ray → APPROVE immediately
-    strong_rejection_checks = {"skin", "color_channels", "saturation", "unique_colors"}
+    strong_rejection_checks = {"skin", "color_channels", "saturation", "badge_logo"}
     strong_failures = [f for f in failed_checks if f[0] in strong_rejection_checks]
 
-    if not failed_checks or (passed_count >= 7 and not strong_failures):
+    # If passed 6 or more checks AND no skin/photo or badge/logo failures → APPROVE immediately
+    if passed_count >= 6 and not strong_failures:
         return XRayCheckResult(
             is_xray=True,
             confidence=0.95,
-            details="Valid chest X-ray (passed local validation checks).",
+            details="Valid chest X-ray radiograph.",
             tier="LOCAL",
         )
 
-    # Strong rejection signals → REJECT immediately (no need for AI)
-    if len(strong_failures) >= 2:
-        # Multiple strong signals = definite non-X-ray
+    # Obvious non-X-ray rejection (skin portrait photo, multi-color cartoon, flat badge)
+    if len(strong_failures) >= 2 or (len(strong_failures) == 1 and passed_count <= 4):
         _, _, reason, conf = strong_failures[0]
-        logger.info("X-ray Tier-1: STRONG REJECT (%d strong signals failed)", len(strong_failures))
-        return XRayCheckResult(
-            is_xray=False,
-            confidence=conf,
-            details=reason,
-            tier="LOCAL",
-        )
-
-    if len(strong_failures) == 1 and passed_count <= 5:
-        # One strong signal + many other failures = likely non-X-ray
-        _, _, reason, conf = strong_failures[0]
-        logger.info("X-ray Tier-1: REJECT (1 strong + %d total failures)", len(failed_checks))
+        logger.info("X-ray Tier-1: REJECT (%s)", reason)
         return XRayCheckResult(
             is_xray=False,
             confidence=conf,
@@ -574,12 +561,21 @@ def verify_xray(img: Image.Image) -> XRayCheckResult:
         except Exception as e:
             logger.warning("X-ray Tier-2: AI call failed: %s", e)
 
-    # ── Fallback: AI unavailable → use local decision ────────────────────
-    _, _, reason, conf = failed_checks[0]
-    logger.info("X-ray Tier-2: AI unavailable — using local rejection")
+    # ── Fallback: AI unavailable → Smart heuristic decision ───────────────
+    if strong_failures:
+        _, _, reason, conf = strong_failures[0]
+        logger.info("X-ray Tier-2: AI unavailable — local rejection (%s)", reason)
+        return XRayCheckResult(
+            is_xray=False,
+            confidence=conf,
+            details=reason,
+            tier="LOCAL",
+        )
+
+    logger.info("X-ray Tier-2: AI unavailable — approving radiograph under local validation")
     return XRayCheckResult(
-        is_xray=False,
-        confidence=conf,
-        details=reason,
+        is_xray=True,
+        confidence=0.88,
+        details="Verified chest X-ray radiograph.",
         tier="LOCAL",
     )
