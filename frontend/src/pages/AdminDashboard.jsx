@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
 import {
   getAdminStats,
   getAdminDoctors,
@@ -53,6 +54,7 @@ export const AdminDashboard = () => {
     setLoading(true);
 
     try {
+      // 1. Fetch via REST API
       const [sData, dData, pData, scData] = await Promise.all([
         getAdminStats(),
         getAdminDoctors(),
@@ -60,10 +62,34 @@ export const AdminDashboard = () => {
         getAdminScans(),
       ]);
 
-      // 1. Load doctors from API and local storage
+      // 2. Fetch directly from Supabase DB tables if active
+      let supaDoctors = [];
+      let supaPatients = [];
+      let supaScans = [];
+
+      if (supabase) {
+        try {
+          const { data: supaProfiles } = await supabase.from('profiles').select('*');
+          if (supaProfiles) {
+            supaDoctors = supaProfiles.filter((p) => p.role === 'doctor');
+            supaPatients = supaProfiles.filter((p) => p.role === 'patient');
+          }
+          const { data: sScans } = await supabase.from('scans').select('*');
+          if (sScans) supaScans = sScans;
+        } catch (e) {
+          console.warn("Direct Supabase query in AdminDashboard:", e);
+        }
+      }
+
+      // 3. Aggregate doctors across API, Supabase DB, and LocalStorage
       const doctorsMap = new Map();
       (dData || []).forEach((d) => {
         if (d.role === 'doctor' || d.id !== 'admin-001') {
+          doctorsMap.set(d.id, d);
+        }
+      });
+      supaDoctors.forEach((d) => {
+        if (!doctorsMap.has(d.id) && d.id !== 'admin-001') {
           doctorsMap.set(d.id, d);
         }
       });
@@ -79,10 +105,15 @@ export const AdminDashboard = () => {
       });
       const finalDoctors = Array.from(doctorsMap.values());
 
-      // 2. Load patients from API and local storage
+      // 4. Aggregate patients across API, Supabase DB, and LocalStorage
       const patientsMap = new Map();
       (pData || []).forEach((p) => {
         patientsMap.set(p.id, p);
+      });
+      supaPatients.forEach((p) => {
+        if (!patientsMap.has(p.id)) {
+          patientsMap.set(p.id, p);
+        }
       });
       let localPatients = [];
       try {
@@ -107,6 +138,15 @@ export const AdminDashboard = () => {
         };
       });
 
+      // 5. Aggregate scans
+      const scansMap = new Map();
+      (scData || []).forEach((sc) => scansMap.set(sc.id || sc.scan_id, sc));
+      supaScans.forEach((sc) => {
+        const key = sc.id || sc.scan_id;
+        if (key && !scansMap.has(key)) scansMap.set(key, sc);
+      });
+      const finalScans = Array.from(scansMap.values());
+
       // Recalculate assigned patients per doctor
       finalDoctors.forEach((doc) => {
         const count = finalPatients.filter((p) => p.doctor_id === doc.id).length;
@@ -116,21 +156,24 @@ export const AdminDashboard = () => {
 
       setDoctors(finalDoctors);
       setPatients(finalPatients);
-      setScans(scData || []);
+      setScans(finalScans);
 
       // Calculate stats
       const totalUsers = finalDoctors.length + finalPatients.length + 1; // +1 Admin
       const totalCap = finalDoctors.reduce((acc, d) => acc + (d.max_capacity || 15), 0);
       const util = Math.round((finalPatients.length / Math.max(1, totalCap)) * 100);
+      const highRiskCount = finalScans.filter((s) => s.risk_level === 'HIGH' || s.needs_human_review).length;
 
       setStats({
-        ...sData,
+        ...(sData || {}),
         total_users: totalUsers,
         total_doctors: finalDoctors.length,
         total_patients: finalPatients.length,
         total_capacity: totalCap,
         total_assigned: finalPatients.length,
         capacity_utilization: util,
+        total_scans: finalScans.length,
+        high_risk_scans: highRiskCount,
       });
     } catch (err) {
       console.error('Error loading Admin dashboard data:', err);
