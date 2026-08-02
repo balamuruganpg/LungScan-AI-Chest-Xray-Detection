@@ -19,9 +19,11 @@ venv/
 env/
 
 # Models (large binary files)
-Models/
+Models/*
+!Models/densenet121_best.keras
 models_optional/
 *.keras
+!densenet121_best.keras
 *.h5
 *.hdf5
 *.pt

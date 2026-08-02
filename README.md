@@ -15,6 +15,10 @@
   </p>
   
   <p>
+    <img src="https://img.shields.io/badge/Deep%20Learning-FF6F00?style=flat-square&logo=tensorflow&logoColor=white" alt="Deep Learning" />
+    <img src="https://img.shields.io/badge/Medical%20AI-E91E63?style=flat-square&logo=health&logoColor=white" alt="Medical AI" />
+    <img src="https://img.shields.io/badge/DenseNet121-3776AB?style=flat-square" alt="DenseNet121" />
+    <img src="https://img.shields.io/badge/Grad--CAM-88CE02?style=flat-square" alt="Grad-CAM" />
     <img src="https://img.shields.io/badge/Status-Completed-success.svg?style=flat-square" alt="Status" />
     <img src="https://img.shields.io/badge/AI%2FML-Technical%20Training-brightgreen.svg?style=flat-square" alt="AIML Training" />
   </p>
@@ -162,7 +166,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-> **Note:** Due to size limits, the trained `.keras` model weights might not be included in this repository. Ensure you place your trained `DenseNet121` model inside the `Models/` directory before starting the backend.
+> **Note:** The pre-trained `densenet121_best.keras` model (~72MB) is **included** directly in the `Models/` directory of this repository! You do not need to download or train the model separately to get started.
 
 ```bash
 # Start the FastAPI server
