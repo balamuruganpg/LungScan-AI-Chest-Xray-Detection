@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Stethoscope, User, Mail, Lock, UserCheck, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Stethoscope, User, Mail, Lock, UserCheck, AlertCircle, CheckCircle2, MailCheck, ArrowRight } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { GsapPage, GsapButton } from '../components/GsapWrapper';
 
@@ -14,20 +14,31 @@ export const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [successInfo, setSuccessInfo] = useState(null);
 
   const { register, loginWithGoogle, user, profile } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-navigate when profile is ready (after register or OAuth)
+  // Auto-navigate when profile is ready (after register or OAuth) if no success popup active
   useEffect(() => {
-    if (user && profile) {
+    if (user && profile && !successInfo) {
       if (profile.role === 'doctor') {
         navigate('/doctor-dashboard', { replace: true });
       } else {
         navigate('/patient-dashboard', { replace: true });
       }
     }
-  }, [user, profile, navigate]);
+  }, [user, profile, navigate, successInfo]);
+
+  const handleProceedToLogin = (customEmail, customMsg) => {
+    navigate('/login', {
+      state: {
+        successMessage: customMsg || "Registration successful. Verification email sent! Please confirm your email before logging in.",
+        email: customEmail || email,
+        registered: true
+      }
+    });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,11 +54,18 @@ export const Register = () => {
         specialization: role === 'doctor' ? specialization : null,
       });
 
-      if (role === 'doctor') {
-        navigate('/doctor-dashboard');
-      } else {
-        navigate('/patient-dashboard');
-      }
+      const successMsg = "Registration successful! Verification email sent. Please confirm your email before logging in.";
+
+      setSuccessInfo({
+        role,
+        email,
+        message: successMsg
+      });
+
+      // Redirect to login page after 3.5 seconds
+      setTimeout(() => {
+        handleProceedToLogin(email, successMsg);
+      }, 3500);
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -56,7 +74,42 @@ export const Register = () => {
   };
 
   return (
-    <GsapPage className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <GsapPage className="min-h-[85vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+      {/* Registration Success Overlay Modal / Popup */}
+      {successInfo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
+          <div className="w-full max-w-md bg-slate-900 border border-emerald-500/50 rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden">
+            <div className="absolute -top-16 -left-16 w-36 h-36 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-16 -right-16 w-36 h-36 bg-cyan-500/20 rounded-full blur-3xl pointer-events-none" />
+
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-cyan-500 text-slate-950 mb-4 shadow-lg shadow-emerald-500/30">
+              <MailCheck className="w-8 h-8 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-extrabold text-white mb-2 tracking-tight">
+              {successInfo.role === 'doctor' ? 'Doctor' : 'Patient'} Account Registered!
+            </h3>
+
+            <p className="text-xs sm:text-sm text-emerald-300 mb-4 font-medium leading-relaxed">
+              Verification email sent. Please confirm your email before logging in.
+            </p>
+
+            <div className="p-3 bg-slate-950/80 rounded-2xl border border-slate-800 text-xs text-slate-400 mb-6">
+              Confirmation link sent to:
+              <span className="block text-cyan-400 font-bold text-sm mt-0.5 break-all">{successInfo.email}</span>
+            </div>
+
+            <button
+              onClick={() => handleProceedToLogin(successInfo.email, successInfo.message)}
+              className="w-full py-3.5 rounded-xl font-extrabold bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all text-sm active:scale-95"
+            >
+              <span>Proceed to Login</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="w-full max-w-lg bg-cyber-card border border-cyber-border rounded-3xl p-8 shadow-2xl backdrop-blur-xl relative overflow-hidden hover-lift">
         {/* Decorative ambient gradient */}
         <div className="absolute -top-24 -left-24 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />

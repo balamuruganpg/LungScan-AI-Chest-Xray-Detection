@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Lock, Mail, ArrowRight, AlertCircle, Stethoscope, UserCheck, Shield } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, CheckCircle2, Stethoscope, UserCheck, Shield } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { GsapPage, GsapButton } from '../components/GsapWrapper';
 
@@ -9,10 +9,22 @@ export const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login, loginWithGoogle, user, profile } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Read registration success state passed via location
+  useEffect(() => {
+    if (location.state?.successMessage || location.state?.message) {
+      setSuccessMessage(location.state.successMessage || location.state.message);
+    }
+    if (location.state?.email) {
+      setEmail(location.state.email);
+    }
+  }, [location.state]);
 
   // If user is already logged in (e.g. after OAuth redirect), navigate to dashboard
   useEffect(() => {
@@ -66,6 +78,17 @@ export const Login = () => {
           <h2 className="text-2xl font-extrabold tracking-tight">Welcome Back</h2>
           <p className="text-xs text-slate-400 mt-1">Sign in to your Doctor or Patient account</p>
         </div>
+
+        {/* Success Alert Banner after Registration */}
+        {successMessage && (
+          <div className="mb-6 p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-300 text-xs flex items-start gap-3 shadow-lg shadow-emerald-500/10 animate-fade-in">
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <strong className="block text-emerald-200 font-bold text-sm mb-0.5">Registration Successful!</strong>
+              <span className="leading-relaxed">{successMessage}</span>
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
